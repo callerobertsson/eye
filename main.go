@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,11 +17,46 @@ type Entry struct {
 	changed time.Time
 }
 
-func main() {
-	if len(os.Args) < 3 {
-		panic("Too few args")
+var (
+	helpFlag      bool
+	recursiveFlag bool
+	patternOption string
+	commandOption string
+)
+
+func init() {
+	flag.BoolVar(&helpFlag, "h", false, "Show usage information and exit")
+	flag.BoolVar(&helpFlag, "help", false, "Show usage information and exit")
+	flag.BoolVar(&recursiveFlag, "r", false, "Recurse sub directories")
+	flag.StringVar(&patternOption, "p", "", "Matching files regex pattern")
+	flag.StringVar(&commandOption, "c", "", "Command to execute on changes")
+	flag.Parse()
+
+	if helpFlag {
+		usage()
+		os.Exit(0)
 	}
-	eye(os.Args[1], os.Args[2])
+
+	if recursiveFlag {
+		fmt.Println("Warning: recursing sub directories not supported in this version. Ignoring.")
+	}
+
+	if patternOption == "" || commandOption == "" {
+		usage()
+		os.Exit(1)
+	}
+}
+
+func main() {
+	eye(patternOption, commandOption)
+}
+
+func usage() {
+	fmt.Println(`Usage:
+	eye -p <PATTERN> -c <COMMAND>
+
+	PATTERN - a regex pattern for matching files to watch
+	COMMAND - the command to execute on changes`)
 }
 
 func eye(pattern, command string) {
