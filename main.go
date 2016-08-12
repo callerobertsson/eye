@@ -71,12 +71,12 @@ func eye(pattern, command string) {
 	r := regexp.MustCompile(pattern)
 
 	t := time.Now()
-	entries := getMatchingEntries(".", r)
-	fmt.Printf("Watching %d files [%v]\n", len(entries), time.Now().Sub(t))
+	entries, total := getMatchingEntries(".", r)
+	fmt.Printf("Watching %d files of %d [%v]\n", len(entries), total, time.Now().Sub(t))
 
 	for {
 		time.Sleep(1 * time.Second)
-		newEntries := getMatchingEntries(".", r)
+		newEntries, _ := getMatchingEntries(".", r)
 		if isDifferent(entries, newEntries) {
 			runCommand(command)
 		}
@@ -85,20 +85,23 @@ func eye(pattern, command string) {
 }
 
 // Get matching entries in dir, and if recursive, all subdirs
-func getMatchingEntries(dir string, r *regexp.Regexp) []Entry {
+// Returns list of matches and the total count of files in tree
+func getMatchingEntries(dir string, r *regexp.Regexp) ([]Entry, int) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
-		panic("Error reading cwd!")
+		return []Entry{}, 0
 	}
 
 	entries := []Entry{}
 	dirs := []string{}
+	total := 0
 
 	for _, fi := range fis {
 		if strings.Index(fi.Name(), ".") != 0 && fi.IsDir() {
 			dirs = append(dirs, dir+"/"+fi.Name())
 			continue
 		}
+		total++
 		if r.MatchString(fi.Name()) {
 			entries = append(entries, Entry{dir + "/" + fi.Name(), fi.ModTime()})
 		}
@@ -106,11 +109,13 @@ func getMatchingEntries(dir string, r *regexp.Regexp) []Entry {
 
 	if recursiveFlag {
 		for _, d := range dirs {
-			entries = append(entries, getMatchingEntries(d, r)...)
+			newEntries, newTotal := getMatchingEntries(d, r)
+			total += newTotal
+			entries = append(entries, newEntries...)
 		}
 	}
 
-	return entries
+	return entries, total
 }
 
 // Compare if two lists of entries are equal
