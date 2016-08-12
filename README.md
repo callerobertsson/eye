@@ -35,4 +35,4 @@ go install
 
 ## Licensing
 
-The code in this project is licensed under MIT license.
+The code in this project is licensed under GPLv3 license.
