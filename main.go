@@ -1,3 +1,4 @@
+// Eye - A simple file change command executioner
 package main
 
 import (
@@ -80,9 +81,10 @@ func runCommand(cmd string) {
 
 	out, err := exec.Command(args[0], args[1:]...).Output()
 	if err != nil {
-		fmt.Printf("WARNING: Could not execute command %q\n", cmd)
-		return
+		fmt.Printf("WARNING: Could not execute command %q: %v\n", cmd, err.Error())
 	}
 
-	fmt.Println(string(out))
+	if out != nil {
+		fmt.Println(string(out))
+	}
 }
