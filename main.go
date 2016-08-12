@@ -70,7 +70,10 @@ func eye(pattern, command string) {
 
 	r := regexp.MustCompile(pattern)
 
+	t := time.Now()
 	entries := getMatchingEntries(".", r)
+	fmt.Printf("Watching %d files [%v]\n", len(entries), time.Now().Sub(t))
+
 	for {
 		time.Sleep(1 * time.Second)
 		newEntries := getMatchingEntries(".", r)
