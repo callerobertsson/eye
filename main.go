@@ -82,9 +82,21 @@ func getMatchingEntries(dir string, r *regexp.Regexp) []Entry {
 	}
 
 	entries := []Entry{}
+	dirs := []string{}
+
 	for _, fi := range fis {
+		if strings.Index(fi.Name(), ".") != 0 && fi.IsDir() {
+			dirs = append(dirs, dir+"/"+fi.Name())
+			continue
+		}
 		if r.MatchString(fi.Name()) {
-			entries = append(entries, Entry{fi.Name(), fi.ModTime()})
+			entries = append(entries, Entry{dir + "/" + fi.Name(), fi.ModTime()})
+		}
+	}
+
+	if recursiveFlag {
+		for _, d := range dirs {
+			entries = append(entries, getMatchingEntries(d, r)...)
 		}
 	}
 
