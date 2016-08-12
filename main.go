@@ -12,11 +12,13 @@ import (
 	"time"
 )
 
+// Entry represents the path to a file to watch and the modification time
 type Entry struct {
 	path    string
 	changed time.Time
 }
 
+// Command line flags and options
 var (
 	helpFlag      bool
 	recursiveFlag bool
@@ -24,6 +26,7 @@ var (
 	commandOption string
 )
 
+// Initialize flags and options
 func init() {
 	flag.BoolVar(&helpFlag, "h", false, "Show usage information and exit")
 	flag.BoolVar(&helpFlag, "help", false, "Show usage information and exit")
@@ -47,10 +50,12 @@ func init() {
 	}
 }
 
+// Main function
 func main() {
 	eye(patternOption, commandOption)
 }
 
+// Print usage information
 func usage() {
 	fmt.Println(`Usage:
 	eye -p <PATTERN> -c <COMMAND>
@@ -59,6 +64,7 @@ func usage() {
 	COMMAND - the command to execute on changes`)
 }
 
+// Primus motor
 func eye(pattern, command string) {
 	fmt.Printf("Eyeing pattern %q for command %q\n", pattern, command)
 
@@ -75,6 +81,7 @@ func eye(pattern, command string) {
 	}
 }
 
+// Get matching entries in dir, and if recursive, all subdirs
 func getMatchingEntries(dir string, r *regexp.Regexp) []Entry {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -103,7 +110,9 @@ func getMatchingEntries(dir string, r *regexp.Regexp) []Entry {
 	return entries
 }
 
+// Compare if two lists of entries are equal
 func isDifferent(old, new []Entry) bool {
+
 	if len(old) > len(new) {
 		fmt.Printf("%d file(s) was removed\n", len(old)-len(new))
 		return true
@@ -123,6 +132,7 @@ func isDifferent(old, new []Entry) bool {
 	return false
 }
 
+// Executes system command
 func runCommand(cmd string) {
 	fmt.Printf("Running %q\n", cmd)
 	args := strings.Fields(cmd)
