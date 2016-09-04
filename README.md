@@ -25,6 +25,16 @@ eye -r -p '\.go$' -c 'go build'
 
 Watch files in current directory with extension `.go` and execute `go build` on changes:
 
+To use for Golang development the `eye-go.sh` can be used as command. 
+
+Copy `eye-go.sh` to your Golang project directory and change it to suit your needs. Then issue the command:
+
+```shell
+eye -r -p '\.go$' -c './eye-go.sh'
+```
+
+Eye will watch all Go files in current directory and below for changes and issue the `eye-go.sh` script if anything changes.  The script will build, lint, and vet the project.
+
 ## Installing
 
 ```shell
