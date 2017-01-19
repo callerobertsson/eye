@@ -145,7 +145,7 @@ func runCommand(cmd string) {
 	fmt.Printf("Running %q\n", cmd)
 	args := strings.Fields(cmd)
 
-	out, err := exec.Command(args[0], args[1:]...).Output()
+	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
 		fmt.Printf("WARNING: Could not execute command %q: %v\n", cmd, err.Error())
 	}
