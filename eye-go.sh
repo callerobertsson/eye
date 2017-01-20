@@ -1,20 +1,30 @@
 #!/bin/bash
 
+# Execute Golang toolchain commands
+# Preferably used as command when running eye file watcher
+
 function execOrDie {
-    echo text $0
-    local args=$@
-    echo cmd $@:1
-    local status=$?
-    if [ $status -ne 0 ]; then
-        echo "error with $1" >&2
+    local step=${@:1:1}
+    local cmd=${@:2}
+
+    echo "Executing: $step"
+    $cmd
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Terminating in $step step"
+        echo ""
+        echo "^^^^^^^^ FAILURE ^^^^^^^^"
+        echo -ne '\007'
         exit
     fi
-    return $status
 }
 
-echo directory: `pwd`
+echo ""
+echo "=== TOOL CHAIN INITIATED ==="
+echo "Directory:" `pwd`
 execOrDie "Go Build" go build -o /dev/null
-execOrDie "Go Lint" golint
-execOrDie "Go Vet" go vet
-echo Done
+execOrDie "Go Test" go test ./...
+execOrDie "Go Vet" go tool vet .
+execOrDie "Go Lint" golint .
+echo "Success"
 
