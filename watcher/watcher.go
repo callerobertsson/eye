@@ -12,42 +12,83 @@ import (
 
 type Watcher struct {
 	p *regexp.Regexp // regex?
-	c CommandFunc    // executed on change
+	c func()         // executed on change
 	r bool           // recurse sub directories
 	i time.Duration  // interval between change scan
+	s chan Status    // status reporting channel
 }
 
-type CommandFunc func()
+type Status struct {
+	Type    StatusType
+	File    string
+	Message string
+}
 
-// Entry represents the path to a file to watch and the modification time
-type Entry struct {
+type StatusType int
+
+const (
+	StatusNone StatusType = iota
+	StatusInfo
+	StatusModified
+	StatusDeleted
+	StatusAdded
+)
+
+// Create Status
+func newStatus(s StatusType, f string, mf string, a ...interface{}) Status {
+	return Status{s, f, fmt.Sprintf(mf, a...)}
+}
+
+// entry represents the path to a file to watch and the modification time
+type entry struct {
 	path    string
 	changed time.Time
 }
 
 // Create a new Watcher
-func New(p *regexp.Regexp, c CommandFunc, recursive bool, i time.Duration) Watcher {
-	return Watcher{p, c, recursive, i}
+func New(p *regexp.Regexp, c func(), recursive bool, i time.Duration, ch chan Status) Watcher {
+	return Watcher{p, c, recursive, i, ch}
+}
+
+// Create an new Watcher with default values
+func NewDefault(p *regexp.Regexp, c func()) Watcher {
+	return New(p, c, true, 1*time.Second, nil)
 }
 
 // Watch for changes and execute command
 func (w Watcher) Watch() {
-	//	fmt.Printf("Eyeing pattern %q for command %q\n", pattern, command)
+	w.reportStatus(newStatus(StatusInfo, "", "Eyeing pattern %q\n", w.p))
 
-	entries, _ := getMatchingEntries(".", w.p, w.r)
-	//fmt.Printf("Watching %d files of %d [%v]\n", len(entries), total, time.Now().Sub(t))
+	entries, total := getMatchingEntries(".", w.p, w.r)
+	w.reportStatus(newStatus(StatusInfo, "", "Watching %d files of %d\n", len(entries), total))
 
 	for {
 		time.Sleep(w.i)
 		newEntries, _ := getMatchingEntries(".", w.p, w.r)
-		if hasChanged(entries, newEntries) {
-			w.c()
+		s := w.getChangeStatus(entries, newEntries)
+		if s.Type == StatusNone {
+			continue
 		}
+
+		w.reportStatus(s)
+
+		// Execute cammond
+		w.c()
+
 		entries = newEntries
 	}
 }
 
+// Report status to channel, if channel is defined
+func (w Watcher) reportStatus(s Status) {
+	if w.s != nil {
+		//	w.s <- Status{s, f, fmt.Sprintf(mf, a...)}
+		w.s <- s
+	}
+}
+
 // Executes system command
+// Can be used by client when wrapped in anonymous func
 func RunSystemCommand(cmd string) {
 	fmt.Printf("Running %q\n", cmd)
 	args := strings.Fields(cmd)
@@ -64,14 +105,14 @@ func RunSystemCommand(cmd string) {
 
 // Get matching entries in dir, and if recursive, all subdirs
 // Returns list of matches and the total count of files in tree
-func getMatchingEntries(dir string, r *regexp.Regexp, recursive bool) ([]Entry, int) {
+func getMatchingEntries(dir string, r *regexp.Regexp, recursive bool) ([]entry, int) {
 
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return []Entry{}, 0
+		return []entry{}, 0
 	}
 
-	entries := []Entry{}
+	entries := []entry{}
 	dirs := []string{}
 	total := 0
 
@@ -82,7 +123,7 @@ func getMatchingEntries(dir string, r *regexp.Regexp, recursive bool) ([]Entry, 
 		}
 		total++
 		if r.MatchString(fi.Name()) {
-			entries = append(entries, Entry{dir + "/" + fi.Name(), fi.ModTime()})
+			entries = append(entries, entry{dir + "/" + fi.Name(), fi.ModTime()})
 		}
 	}
 
@@ -98,23 +139,21 @@ func getMatchingEntries(dir string, r *regexp.Regexp, recursive bool) ([]Entry, 
 }
 
 // Compare if two lists of entries are equal
-func hasChanged(old, new []Entry) bool {
+func (w Watcher) getChangeStatus(old, new []entry) Status {
 
 	if len(old) > len(new) {
-		fmt.Printf("%d file(s) was removed\n", len(old)-len(new))
-		return true
+		return Status{StatusDeleted, "", fmt.Sprintf("%d file(s) was removed\n", len(old)-len(new))}
 	}
 	if len(old) < len(new) {
-		fmt.Printf("%d file(s) was added\n", len(new)-len(old))
-		return true
+		return Status{StatusAdded, "", fmt.Sprintf("%d file(s) was added\n", len(new)-len(old))}
 	}
 
 	for i := range old {
 		if old[i] != new[i] {
-			fmt.Printf("The file %q was modified\n", old[i].path)
-			return true
+			f := old[i].path
+			return Status{StatusModified, f, fmt.Sprintf("The file %q was modified\n", f)}
 		}
 	}
 
-	return false
+	return Status{StatusNone, "", ""}
 }

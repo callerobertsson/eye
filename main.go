@@ -54,19 +54,35 @@ func main() {
 	}
 
 	// Create Watcher
-	w := watcher.New(p, c, recursiveFlag, 1*time.Second)
+	ss := make(chan watcher.Status)
+	w := watcher.New(p, c, recursiveFlag, 1*time.Second, ss)
 
-	// Run the Watcher forever
+	// Watch
+	go w.Watch()
 
-	w.Watch()
+	// Read statuses until end of time
+	for {
+		s := <-ss
+		printStatus(s)
+	}
+}
+
+// Print status to the console
+func printStatus(s watcher.Status) {
+	switch s.Type {
+	case watcher.StatusModified:
+		fmt.Printf("\nMODIFIED: The file %q was changed\n", s.File)
+	case watcher.StatusAdded:
+		fmt.Printf("\nADDED: %v\n", s.Message)
+	case watcher.StatusDeleted:
+		fmt.Printf("\nDELETED: %v\n", s.Message)
+	default:
+		fmt.Printf("%v", s.Message)
+	}
 }
 
 // Print usage information
 func usage() {
-	// TODO: Fix usage info, use flag
-	fmt.Println(`Usage:
-	eye [-r] -p <PATTERN> -c <COMMAND>
-
-	PATTERN - a regex pattern for matching files to watch
-	COMMAND - the command to execute on changes`)
+	fmt.Println("Usage:\n\teye [-r] -p <PATTERN> -c <COMMAND>\n")
+	flag.PrintDefaults()
 }
