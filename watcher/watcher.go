@@ -10,18 +10,13 @@ import (
 	"time"
 )
 
+// The Watcher
 type Watcher struct {
 	p *regexp.Regexp // regex?
 	c func()         // executed on change
 	r bool           // recurse sub directories
 	i time.Duration  // interval between change scan
 	s chan Status    // status reporting channel
-}
-
-// entry represents the path to a file to watch and the modification time
-type entry struct {
-	path    string
-	changed time.Time
 }
 
 // Create a new Watcher
@@ -56,7 +51,7 @@ func (w Watcher) Watch() {
 		w.c()
 
 		entries = newEntries
-		w.reportStatus(newStatus(StatusInfo, "", "XXXXX Watching %d files of %d\n", len(entries), total))
+		w.reportStatus(newStatus(StatusInfo, "", "Watching %d files of %d\n", len(entries), total))
 	}
 }
 
@@ -68,7 +63,7 @@ func (w Watcher) reportStatus(s Status) {
 	}
 }
 
-// Executes system command
+// Helper functien for executing a system command
 // Can be used by client when wrapped in anonymous func
 func RunSystemCommand(cmd string) {
 	fmt.Printf("Running %q\n", cmd)
@@ -123,10 +118,11 @@ func getMatchingEntries(dir string, r *regexp.Regexp, recursive bool) ([]entry, 
 func (w Watcher) getChangeStatus(old, new []entry) Status {
 
 	if len(old) > len(new) {
-		return Status{StatusDeleted, "", fmt.Sprintf("%d file(s) was removed\n", len(old)-len(new))}
+		return Status{StatusDeleted, "", fmt.Sprintf("%d file(s) was removed", len(old)-len(new))}
 	}
+
 	if len(old) < len(new) {
-		return Status{StatusAdded, "", fmt.Sprintf("%d file(s) was added\n", len(new)-len(old))}
+		return Status{StatusAdded, "", fmt.Sprintf("%d file(s) was added", len(new)-len(old))}
 	}
 
 	for i := range old {
@@ -137,4 +133,10 @@ func (w Watcher) getChangeStatus(old, new []entry) Status {
 	}
 
 	return Status{StatusNone, "", ""}
+}
+
+// entry represents the path to a file to watch and the modification time
+type entry struct {
+	path    string
+	changed time.Time
 }

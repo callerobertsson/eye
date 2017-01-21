@@ -55,8 +55,10 @@ func main() {
 		watcher.RunSystemCommand(commandOption)
 	}
 
-	// Create Watcher
+	// Create status reporting channel
 	ss := make(chan watcher.Status)
+
+	// Create Watcher
 	w := watcher.New(p, c, !noRecursionFlag, 1*time.Second, ss)
 
 	// Watch
