@@ -44,7 +44,7 @@ func init() {
 // Main function
 func main() {
 	// Compile the input pattern
-	p, err := regexp.Compile(patternOption) // TODO: Handle errors in patterns
+	p, err := regexp.Compile(patternOption)
 	if err != nil {
 		fmt.Printf("-p %q is not a valid regular expression\n", patternOption)
 		os.Exit(1)
