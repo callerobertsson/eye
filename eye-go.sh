@@ -22,6 +22,14 @@ function execOrDie {
     fi
 }
 
+function execIgnore {
+    local step=${@:1:1}
+    local cmd=${@:2}
+
+    echo "Executing: $step"
+    $cmd
+}
+
 echo ""
 echo "=== TOOL CHAIN INITIATED ==="
 echo "Directory:" `pwd`
@@ -29,4 +37,5 @@ execOrDie "Go Build" go build -o /dev/null
 execOrDie "Go Test" go test ./...
 execOrDie "Go Vet" go tool vet .
 execOrDie "Go Lint" golint .
+execIgnore "Ack TODO" ack --go TODO
 echo "Success"
