@@ -1,4 +1,7 @@
 #!/bin/bash
+# eye script to be executed on file changes
+# I.e. `eye -r -m '\.go$ -c './eye-dev.sh'`
+# See: https://github.com/callerobertsson/eye
 
 # Execute Golang toolchain commands
 # Preferably used as command when running eye file watcher
@@ -27,4 +30,3 @@ execOrDie "Go Test" go test ./...
 execOrDie "Go Vet" go tool vet .
 execOrDie "Go Lint" golint .
 echo "Success"
-
