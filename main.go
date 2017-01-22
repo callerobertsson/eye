@@ -13,10 +13,11 @@ import (
 
 // Command line flags and options
 var (
-	helpFlag        bool
-	patternOption   string
-	commandOption   string
-	noRecursionFlag bool
+	helpFlag             bool
+	patternOption        string
+	commandOption        string
+	noRecursionFlag      bool
+	intervalMillisOption int
 )
 
 // Initialize flags and options
@@ -26,6 +27,7 @@ func init() {
 	flag.BoolVar(&noRecursionFlag, "R", false, "Do *not* recurse sub directories")
 	flag.StringVar(&patternOption, "p", "", "Matching files regex pattern")
 	flag.StringVar(&commandOption, "c", "", "Command to execute on changes")
+	flag.IntVar(&intervalMillisOption, "i", 1000, "Interval between checks in millis, defalt 1000 ms")
 	flag.Parse()
 
 	// Print usage and exit if help flag present
@@ -59,7 +61,8 @@ func main() {
 	ss := make(chan watcher.Status)
 
 	// Create Watcher
-	w := watcher.New(p, c, !noRecursionFlag, 1*time.Second, ss)
+	i := time.Duration(intervalMillisOption) * time.Millisecond
+	w := watcher.New(p, c, !noRecursionFlag, i, ss)
 
 	// Watch
 	go w.Watch()
