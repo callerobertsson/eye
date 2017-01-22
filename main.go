@@ -87,6 +87,6 @@ func printStatus(s watcher.Status) {
 
 // Print usage information
 func usage() {
-	fmt.Printf("Usage:\n\teye [-r] -p <PATTERN> -c <COMMAND>\n\n")
+	fmt.Printf("Usage:\n\teye [-R] -p <PATTERN> -c <COMMAND>\n\n")
 	flag.PrintDefaults()
 }

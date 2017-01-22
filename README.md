@@ -5,17 +5,20 @@
 
 Eye watches file pattern regex and executes a command on changes.
 
+Watch interval is hard coded to 1 second.
+
 ## Synopsis
 
 ```shell
-eye [-r] -p <regex_pattern> -c <command>
+eye [-R] -p <regex_pattern> -c <command>
 ```
 
 Flags:
 
-* `-r` - recurse sub directories.
-* `-p <regex_pattern>` - matching pattern for files to watch.
-* `-c <command>` - the command to execute on changes.
+* `-R` - do not recurse sub directories, optional
+* `-p <regex_pattern>` - matching pattern for files to watch, mandatory.
+* `-c <command>` - the command to execute on changes, mandatory.
+* `-h` | `--help` - print usage information.
 
 ### Examples
 
@@ -30,7 +33,7 @@ To use for Golang development the `eye-go.sh` can be used as command.
 Copy `eye-go.sh` to your Golang project directory and change it to suit your needs. Then issue the command:
 
 ```shell
-eye -r -p '\.go$' -c './eye-go.sh'
+eye -p '\.go$' -c './eye-go.sh'
 ```
 
 Eye will watch all Go files in current directory and below for changes and issue the `eye-go.sh` script if anything changes.  The script will build, lint, and vet the project.
