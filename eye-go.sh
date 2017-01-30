@@ -6,36 +6,39 @@
 # Execute Golang toolchain commands
 # Preferably used as command when running eye file watcher
 
+BACK="\033[0m"
+FAIL="\033[31m"
+PASS="\033[32m"
+INFO="\033[33m"
+
 function execOrDie {
     local step=${@:1:1}
     local cmd=${@:2}
 
-    echo "Executing: $step"
     $cmd
+
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "Terminating in $step step"
-        echo ""
-        echo "^^^^^^^^ FAILURE ^^^^^^^^"
         echo -ne '\007'
+        printf "\n${FAIL}$step: FAIL${BACK}\n"
         exit
     fi
+
+    printf "${PASS}$step: PASS${BACK}\n"
 }
 
 function execIgnore {
     local step=${@:1:1}
     local cmd=${@:2}
 
-    echo "Executing: $step"
     $cmd
+    printf "${INFO}$step DONE${BACK}"
 }
 
-echo ""
-echo "=== TOOL CHAIN INITIATED ==="
-echo "Directory:" `pwd`
+clear
+printf "${INFO}Golang Tool Chain${BACK}\n"
+printf "Directory: %s\n\n" `pwd`
 execOrDie "Go Build" go build -o /dev/null
 execOrDie "Go Test" go test ./...
 execOrDie "Go Vet" go tool vet .
 execOrDie "Go Lint" golint .
 execIgnore "Ack TODO" ack --go TODO
-echo "Success"
