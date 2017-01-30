@@ -31,8 +31,6 @@ func NewDefault(p *regexp.Regexp, c func()) Watcher {
 
 // Watch for changes and execute command
 func (w Watcher) Watch() {
-	w.reportStatus(newStatus(StatusInfo, "", "Eyeing pattern %q\n", w.p))
-
 	entries, total := getMatchingEntries(".", w.p, w.r)
 	w.reportStatus(newStatus(StatusInfo, "", "Watching %d files of %d\n", len(entries), total))
 
@@ -58,25 +56,25 @@ func (w Watcher) Watch() {
 // Report status to channel, if channel is defined
 func (w Watcher) reportStatus(s Status) {
 	if w.s != nil {
-		//	w.s <- Status{s, f, fmt.Sprintf(mf, a...)}
 		w.s <- s
 	}
 }
 
 // Helper functien for executing a system command
 // Can be used by client when wrapped in anonymous func
-func RunSystemCommand(cmd string) {
-	fmt.Printf("Running %q\n", cmd)
+func RunSystemCommand(cmd string) error {
 	args := strings.Fields(cmd)
 
 	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
-		fmt.Printf("WARNING: Could not execute command %q: %v\n", cmd, err.Error())
+		return fmt.Errorf("Could not execute command %q: %v\n", cmd, err)
 	}
 
 	if out != nil {
 		fmt.Println(string(out))
 	}
+
+	return nil
 }
 
 // Get matching entries in dir, and if recursive, all subdirs

@@ -1,0 +1,6 @@
+! Example Resource File used by go test
+
+pattern: \.go$
+recursive: false
+interval-millis: 500
+

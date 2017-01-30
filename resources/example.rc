@@ -1,0 +1,9 @@
+! Example Resource File used by go test
+
+what-file :       .examplerc
+pattern: \.go$
+command: go test ./...
+recursive: true
+interval-millis: 500
+! interval is omitted in this test
+
