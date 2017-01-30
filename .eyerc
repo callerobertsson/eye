@@ -1,0 +1,4 @@
+pattern: \.go$
+command: ./eye-go.sh
+recursive: true
+interval-millis: 2000
