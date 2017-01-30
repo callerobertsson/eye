@@ -1,4 +1,5 @@
 // Eye - A simple file change command executioner
+
 package main
 
 import (
@@ -8,61 +9,58 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/callerobertsson/eye/params"
 	"github.com/callerobertsson/eye/watcher"
 )
 
-// Command line flags and options
-var (
-	helpFlag             bool
-	patternOption        string
-	commandOption        string
-	noRecursionFlag      bool
-	intervalMillisOption int
-)
+// Main function
+func main() {
+	fmt.Printf("Eye - the file change watcher\n")
 
-// Initialize flags and options
-func init() {
-	flag.BoolVar(&helpFlag, "h", false, "Show usage information and exit")
-	flag.BoolVar(&helpFlag, "help", false, "Show usage information and exit")
-	flag.BoolVar(&noRecursionFlag, "R", false, "Do *not* recurse sub directories")
-	flag.StringVar(&patternOption, "p", "", "Matching files regex pattern")
-	flag.StringVar(&commandOption, "c", "", "Command to execute on changes")
-	flag.IntVar(&intervalMillisOption, "i", 1000, "Interval between checks in millis, defalt 1000 ms")
-	flag.Parse()
+	// Read params from resource file and command line
+	ps, err := initParams()
+	if err != nil {
+		fmt.Printf("Error in arguments or resource file: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Print usage and exit if help flag present
-	if helpFlag {
+	if ps.Help {
 		usage()
 		os.Exit(0)
 	}
 
-	// Pattern and Command are mandatory
-	if patternOption == "" || commandOption == "" {
-		usage()
+	// Compile the input pattern
+	p, err := regexp.Compile(ps.Pattern)
+	if err != nil {
+		fmt.Printf("-p %q is not a valid regular expression\n", ps.Pattern)
 		os.Exit(1)
 	}
-}
 
-// Main function
-func main() {
-	// Compile the input pattern
-	p, err := regexp.Compile(patternOption)
-	if err != nil {
-		fmt.Printf("-p %q is not a valid regular expression\n", patternOption)
-		os.Exit(1)
+	// Show params
+	fmt.Printf("  %-14v %v\n", "Pattern:", ps.Pattern)
+	fmt.Printf("  %-14v %v\n", "Command:", ps.Command)
+	fmt.Printf("  %-14v %v\n", "Recursive:", ps.Recursive)
+	fmt.Printf("  %-14v %v millis\n", "Interval:", ps.IntervalMillis)
+	if ps.ResourceFile != "" {
+		fmt.Printf("  %-14v %v\n", "Resource file:", ps.ResourceFile)
 	}
 
 	// Create the command function
 	c := func() {
-		watcher.RunSystemCommand(commandOption)
+		err := watcher.RunSystemCommand(ps.Command)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(2)
+		}
 	}
 
 	// Create status reporting channel
 	ss := make(chan watcher.Status)
 
 	// Create Watcher
-	i := time.Duration(intervalMillisOption) * time.Millisecond
-	w := watcher.New(p, c, !noRecursionFlag, i, ss)
+	i := time.Duration(ps.IntervalMillis) * time.Millisecond
+	w := watcher.New(p, c, ps.Recursive, i, ss)
 
 	// Watch
 	go w.Watch()
@@ -72,6 +70,36 @@ func main() {
 		s := <-ss
 		printStatus(s)
 	}
+}
+
+func initParams() (ps params.Params, err error) {
+	// Set default values for Params
+	ps.Recursive = true
+	ps.IntervalMillis = 3000
+
+	// Read parameters from resources, if present
+	err = ps.AddParamsFromResourceFile([]string{"./.eyerc", "~/.eyerc"})
+	if err != nil {
+		fmt.Printf("Error reading resource file: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Command line arguments will override, if present
+	err = ps.AddParamsFromCommandLine()
+	if err != nil {
+		fmt.Printf("Error in arguments: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Pattern and Command are mandatory
+	if ps.Pattern == "" {
+		return ps, fmt.Errorf("Pattern is empty")
+	}
+	if ps.Command == "" {
+		return ps, fmt.Errorf("Command is empty")
+	}
+
+	return ps, nil
 }
 
 // Print status to the console
@@ -91,5 +119,6 @@ func printStatus(s watcher.Status) {
 // Print usage information
 func usage() {
 	fmt.Printf("Usage:\n\teye [-R] -p <PATTERN> -c <COMMAND>\n\n")
+	fmt.Print("Resources read from ./.eyerc or ~/.eyerc will be overridden by command line parameters\n\n")
 	flag.PrintDefaults()
 }
