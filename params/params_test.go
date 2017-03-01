@@ -1,6 +1,11 @@
 package params
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 const testResourceFile = "./example.rc"
 
@@ -15,22 +20,11 @@ func TestAddParamsFromResourceFile(t *testing.T) {
 
 	// Act
 	err := ps.AddParamsFromResourceFile([]string{"unexisting-file", testResourceFile})
-	if err != nil {
-		t.Errorf("New returned error \"%v\"", err)
-		return
-	}
+	assert.Nil(t, err, fmt.Sprintf("New returned error \"%v\"", err))
 
 	// Assert
-	if ps.Pattern != "\\.go$" {
-		t.Errorf("Expected Pattern to be %q, but got %q\n", "\\.go$", ps.Pattern)
-	}
-	if ps.Command != "same" {
-		t.Errorf("Expected Command to be %q, but got %q\n", "same", ps.Command)
-	}
-	if ps.Recursive != false {
-		t.Errorf("Expected Recursive to be %v, but got %v\n", false, ps.Recursive)
-	}
-	if ps.IntervalMillis != 500 {
-		t.Errorf("Expected Pattern to be %v, but got %v\n", 500, ps.IntervalMillis)
-	}
+	assert.Equal(t, ps.Pattern, "\\.go$", "Wrong pattern")
+	assert.Equal(t, ps.Command, "same", "Command mismatch")
+	assert.False(t, ps.Recursive, "Recursive flag error")
+	assert.Equal(t, ps.IntervalMillis, 500, "Wrong IntervalMillis")
 }
