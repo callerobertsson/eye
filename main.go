@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/user"
 	"regexp"
 	"time"
 
@@ -77,8 +78,14 @@ func initParams() (ps params.Params, err error) {
 	ps.Recursive = true
 	ps.IntervalMillis = 3000
 
+	usr, err := user.Current()
+	if err != nil {
+		fmt.Printf("Could not get current user: %v", err)
+		os.Exit(1)
+	}
+
 	// Read parameters from resources, if present
-	err = ps.AddParamsFromResourceFile([]string{"./.eyerc", "~/.eyerc"})
+	err = ps.AddParamsFromResourceFile([]string{"./.eyerc", usr.HomeDir + "/.eyerc"})
 	if err != nil {
 		fmt.Printf("Error reading resource file: %v\n", err)
 		os.Exit(1)
