@@ -49,7 +49,7 @@ Flags:
 * `-p <regex_pattern>` - matching pattern for files to watch, mandatory.
 * `-c <command>` - the command to execute on changes, mandatory.
 * `-R` - do not recurse sub directories, optional.
-* `-i <milliseconds> - number of milli seconds to wait between checks,
+* `-i <milliseconds>` - number of milli seconds to wait between checks,
   default value 1000 ms (1 s).
 
 ### Resource file

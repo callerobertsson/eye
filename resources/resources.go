@@ -1,3 +1,4 @@
+// Package resources implements the Resources data type and functions
 package resources
 
 import (
@@ -20,7 +21,7 @@ var (
 	regexpSettingLine = regexp.MustCompile(`^\s*([^\s]+)\s*:\s*(.*)\s*$`)
 )
 
-// NewFromFile tries to read resource files in fs.
+// New tries to read resource files in fs.
 // Returns error if a file has error
 // NOTE: No error if no files are found, but File will be ""
 func New(fs []string) (r Resources, err error) {
@@ -63,7 +64,7 @@ func (r *Resources) parseResource(data string) error {
 		}
 
 		// Something unmatched is not allowed
-		return fmt.Errorf("Syntax error on line %d: %q", i, l)
+		return fmt.Errorf("syntax error on line %d: %q", i, l)
 	}
 
 	return nil

@@ -1,5 +1,4 @@
-// Eye - A simple file change command executioner
-
+// Package main implements Eye, a simple file change command executioner
 package main
 
 import (
@@ -100,10 +99,10 @@ func initParams() (ps params.Params, err error) {
 
 	// Pattern and Command are mandatory
 	if ps.Pattern == "" {
-		return ps, fmt.Errorf("Pattern is empty")
+		return ps, fmt.Errorf("pattern is empty")
 	}
 	if ps.Command == "" {
-		return ps, fmt.Errorf("Command is empty")
+		return ps, fmt.Errorf("command is empty")
 	}
 
 	return ps, nil

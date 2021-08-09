@@ -1,0 +1,17 @@
+! Example Eye Resource File
+! 
+! Copy this file to `.eyerc`, edit it according to your wishes.
+! Put it in the root dir of your project and execute `eye` from there, or
+! put it in $HOME if you want it to be used by default.
+
+! pattern matching files to watch
+pattern: \.go$
+
+! command to execute when matching files are modified
+command: ./eye-go.sh
+
+! recurse directory tree if true
+recursive: true
+
+! check for modified files interval in milli seconds
+interval-millis: 2000

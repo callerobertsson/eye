@@ -1,8 +1,10 @@
-// Watches for changes matching a pattern in a file structure on an interval
+// Package watcher defines the type that watches the files for changes matching a pattern in a file structure on an interval
 package watcher
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os/exec"
 	"regexp"
@@ -10,7 +12,7 @@ import (
 	"time"
 )
 
-// The Watcher
+// Watcher data type
 type Watcher struct {
 	p *regexp.Regexp // regex?
 	c func()         // executed on change
@@ -19,17 +21,23 @@ type Watcher struct {
 	s chan Status    // status reporting channel
 }
 
-// Create a new Watcher
+// entry represents the path to a file to watch and the modification time
+type entry struct {
+	path    string
+	changed time.Time
+}
+
+// New creates a new Watcher
 func New(p *regexp.Regexp, c func(), recursive bool, i time.Duration, ch chan Status) Watcher {
 	return Watcher{p, c, recursive, i, ch}
 }
 
-// Create an new Watcher with default values
+// NewDefault creates an new Watcher with default values
 func NewDefault(p *regexp.Regexp, c func()) Watcher {
 	return New(p, c, true, 1*time.Second, nil)
 }
 
-// Watch for changes and execute command
+// Watch watches for changes and execute command
 func (w Watcher) Watch() {
 	entries, total := getMatchingEntries(".", w.p, w.r)
 	w.reportStatus(newStatus(StatusInfo, "", "Watching %d files of %d\n", len(entries), total))
@@ -60,21 +68,38 @@ func (w Watcher) reportStatus(s Status) {
 	}
 }
 
-// Helper functien for executing a system command
+// RunSystemCommand runs the command and display the output during the execution
 // Can be used by client when wrapped in anonymous func
-func RunSystemCommand(cmd string) error {
-	args := strings.Fields(cmd)
+func RunSystemCommand(c string) error {
+	args := strings.Fields(c)
 
-	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Could not execute command %q: %v\n", cmd, err)
+	cmd := exec.Command(args[0], args[1:]...)
+	outPipe, _ := cmd.StdoutPipe()
+	errPipe, _ := cmd.StderrPipe()
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	reader := bufio.NewReader(outPipe)
+	line, err := reader.ReadString('\n')
+	for err == nil {
+		fmt.Printf("%v", line)
+		line, err = reader.ReadString('\n')
+	}
+	if err != nil && err != io.EOF {
+		return err
+	}
+	reader = bufio.NewReader(errPipe)
+	line, err = reader.ReadString('\n')
+	for err == nil {
+		fmt.Printf("%v", line)
+		line, err = reader.ReadString('\n')
+	}
+	if err != nil && err != io.EOF {
+		return err
 	}
 
-	if out != nil {
-		fmt.Println(string(out))
-	}
-
-	return nil
+	return cmd.Wait()
 }
 
 // Get matching entries in dir, and if recursive, all subdirs
@@ -131,10 +156,4 @@ func (w Watcher) getChangeStatus(old, new []entry) Status {
 	}
 
 	return Status{StatusNone, "", ""}
-}
-
-// entry represents the path to a file to watch and the modification time
-type entry struct {
-	path    string
-	changed time.Time
 }

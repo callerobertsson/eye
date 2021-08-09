@@ -1,3 +1,4 @@
+// Package params defines the Params data type and functions
 package params
 
 import (
@@ -18,6 +19,7 @@ type Params struct {
 	ResourceFile   string
 }
 
+// AddParamsFromResourceFile reads the fs file and sets the values
 func (ps *Params) AddParamsFromResourceFile(fs []string) error {
 
 	// Create Resource
@@ -37,14 +39,14 @@ func (ps *Params) AddParamsFromResourceFile(fs []string) error {
 	if v, ok := rcs.Map["recursive"]; ok {
 		recursive, err := strconv.ParseBool(v)
 		if err != nil {
-			return fmt.Errorf("The recursive setting can only be true or false")
+			return fmt.Errorf("the recursive setting can only be true or false")
 		}
 		ps.Recursive = recursive
 	}
 	if v, ok := rcs.Map["interval-millis"]; ok {
 		millis, err := strconv.Atoi(v)
 		if err != nil {
-			return fmt.Errorf("The interval-millis setting must be a numerical value")
+			return fmt.Errorf("the interval-millis setting must be a numerical value")
 		}
 		ps.IntervalMillis = millis
 	}
@@ -54,7 +56,7 @@ func (ps *Params) AddParamsFromResourceFile(fs []string) error {
 	return nil
 }
 
-// Initialize flags and options
+// AddParamsFromCommandLine initializes flags and options
 func (ps *Params) AddParamsFromCommandLine() error {
 
 	// Command line flags and options
